@@ -142,7 +142,7 @@ class DynamicArray:
         return self.data.pop()
 
     def swap(self, i: int, j: int) -> None:
-        """ Swaps values of two elements given their indicies """
+        """ Swaps values of two elements given their indices """
         self.data[i], self.data[j] = self.data[j], self.data[i]
 
     def get_at_index(self, index: int) -> object:
