@@ -98,9 +98,10 @@ class HashMap:
 
         while self.buckets[probe_index] is not None:
             # Check if tombstone
-            if self.buckets[probe_index].is_tombstone and ts_index is None:
-                ts_index = probe_index
-            elif self.buckets[probe_index].key == key:
+            if self.buckets[probe_index].is_tombstone:
+                if ts_index is None:
+                    ts_index = probe_index
+            elif self.buckets[probe_index].key == key:      # Bypassed if tombstone
                 return self.buckets[probe_index]
 
             modifier_index += 1
@@ -155,8 +156,6 @@ class HashMap:
         # quadratic probing required
         search_result = self.search_for_key(key)
         if type(search_result) is not int:
-            search_result.key = None
-            search_result.value = None
             search_result.is_tombstone = True
             self.size -= 1
 
