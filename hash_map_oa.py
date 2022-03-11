@@ -115,13 +115,15 @@ class HashMap:
         """
         for index in range(self.buckets.length()):
             self.buckets[index] = None
+        self.size = 0
 
     def get(self, key: str) -> object:
         """
-        TODO: Write this implementation
+        Returns the value associated with the given key, or None if not found.
         """
         # quadratic probing required
-        pass
+        search_result = self.search_for_key(key)
+        return None if type(search_result) is int else search_result.value
 
     def put(self, key: str, value: object) -> None:
         """
@@ -146,17 +148,25 @@ class HashMap:
 
     def remove(self, key: str) -> None:
         """
-        TODO: Write this implementation
+        Removes the entry with the given key from the hash table.
+        If there is an entry, replaces with a tombstone.
+        If not, does nothing.
         """
         # quadratic probing required
-        pass
+        search_result = self.search_for_key(key)
+        if type(search_result) is not int:
+            search_result.key = None
+            search_result.value = None
+            search_result.is_tombstone = True
+            self.size -= 1
 
     def contains_key(self, key: str) -> bool:
         """
-        TODO: Write this implementation
+        Returns True if the given key is in the hash map, else False.
         """
         # quadratic probing required
-        pass
+        search_result = self.search_for_key(key)
+        return type(search_result) is not int
 
     def empty_buckets(self) -> int:
         """
@@ -172,16 +182,51 @@ class HashMap:
 
     def resize_table(self, new_capacity: int) -> None:
         """
-        TODO: Write this implementation
+        Changes internal capacity of the hash table and rehashes all keys.
+        Capacity cannot be < 1 or < number of elements currently in the map.
         """
         # remember to rehash non-deleted entries into new table
-        pass
+
+        # Validate
+        if new_capacity < 1 or new_capacity < self.size:
+            return
+
+        # Store old entries
+        old_array = DynamicArray()
+        for index in range(self.buckets.length()):
+            old_array.append(self.buckets[index])
+
+        # Clear buckets and update capacity
+        self.buckets = DynamicArray()
+        self.capacity = new_capacity
+        for _ in range(self.capacity):
+            self.buckets.append(None)
+        self.size = 0                               # Size will be rebuilt after "put" iterations
+
+        # Rehash non-empty entries and add to new array
+        for index in range(old_array.length()):
+            element = old_array[index]
+            if element is None:                     # Ignore empty values
+                continue
+            if element.is_tombstone:                # Ignore tombstones
+                continue
+            self.put(element.key, element.value)
+
 
     def get_keys(self) -> DynamicArray:
         """
-        TODO: Write this implementation
+        Returns a DynamicArray containing all the keys in the hash map in no particular order.
         """
-        pass
+        output = DynamicArray()
+        for index in range(self.buckets.length()):
+            element = self.buckets[index]
+            if element is None:
+                continue
+            if element.is_tombstone:
+                continue
+            output.append(element.key)
+
+        return output
 
 
 if __name__ == "__main__":
