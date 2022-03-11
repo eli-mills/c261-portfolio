@@ -79,11 +79,42 @@ class HashMap:
             out += str(i) + ': ' + str(self.buckets[i]) + '\n'
         return out
 
+    def get_hashed_key(self, key: str) -> int:
+        """
+        Returns the given key hashed to the current capacity of the table.
+        """
+        return self.hash_function(key) % self.capacity
+
+    def search_for_key(self, key: str) -> HashEntry:
+        """
+        Given a key, returns the matching HashEntry object if matched.
+        If no match, returns the first replaceable index.
+        """
+        # Start at hashed index and quadratically probe until open space found.
+        initial_index = self.get_hashed_key(key)
+        modifier_index = 0
+        probe_index = initial_index
+        ts_index = None
+
+        while self.buckets[probe_index] is not None:
+            # Check if tombstone
+            if self.buckets[probe_index].is_tombstone and ts_index is None:
+                ts_index = probe_index
+            elif self.buckets[probe_index].key == key:
+                return self.buckets[probe_index]
+
+            modifier_index += 1
+            probe_index = (initial_index + modifier_index ** 2) % self.capacity
+
+        # None reached, meaning the key was not found.
+        return ts_index if ts_index is not None else probe_index
+
     def clear(self) -> None:
         """
-        TODO: Write this implementation
+        Clears the contents of the hash map while retaining capacity.
         """
-        pass
+        for index in range(self.buckets.length()):
+            self.buckets[index] = None
 
     def get(self, key: str) -> object:
         """
@@ -94,13 +125,24 @@ class HashMap:
 
     def put(self, key: str, value: object) -> None:
         """
-        TODO: Write this implementation
+        Updates the key/value pair if key already in hash map, else creates new KVP.
         """
         # remember, if the load factor is greater than or equal to 0.5,
         # resize the table before putting the new key/value pair
         #
         # quadratic probing required
-        pass
+
+        # Double capacity if current load factor >= 50%.
+        if self.table_load() >= 0.5:
+            self.resize_table(self.capacity * 2)
+
+        # Search for the key
+        result = self.search_for_key(key)
+        if type(result) is int:                                  # Key was not found.
+            self.buckets[result] = HashEntry(key, value)     # Add new entry to empty space.
+            self.size += 1
+        else:                                                   # Matching key found.
+            result.value = value
 
     def remove(self, key: str) -> None:
         """
@@ -118,15 +160,15 @@ class HashMap:
 
     def empty_buckets(self) -> int:
         """
-        TODO: Write this implementation
+        Returns the number of empty buckets in the hash table.
         """
-        pass
+        return self.capacity - self.size
 
     def table_load(self) -> float:
         """
-        TODO: Write this implementation
+        Returns the current hash table load factor.
         """
-        pass
+        return self.size / self.capacity
 
     def resize_table(self, new_capacity: int) -> None:
         """
